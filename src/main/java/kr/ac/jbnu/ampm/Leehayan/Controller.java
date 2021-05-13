@@ -108,31 +108,33 @@ public class Controller {
 
     @RequestMapping(value = "/put/{id}", method = RequestMethod.PUT, produces = "application/json")
     @ResponseBody
-    public ResponseEntity<?> putResponseEntity(HttpServletRequest request, @PathVariable String id, @RequestBody Map<String,Object> requestMap){
+    public ResponseEntity<?> putResponseEntity(HttpServletRequest request, @PathVariable String id, @RequestBody Map<String, Object> requestMap) {
         ResponseEntity<?> responseEntity = null;
-        ArrayList<Map<String,Object>> postValueArrayList = null;
+        ArrayList<Map<String, Object>> postValueArrayList = null;
 
-        if(!testDBHashMap.isEmpty()){
-            if(id!=null && !id.equals("")&&testDBHashMap.containsKey(id)){
-            postValueArrayList = new ArrayList<Map<String,Object>>();//새로운 db
-            postValueArrayList.add(requestMap);
+        if (!testDBHashMap.isEmpty()) {
+            if (id != null && !id.equals("") && testDBHashMap.containsKey(id)) {//DB에 key가있을 때, put 요청 실행
+                postValueArrayList = testDBHashMap.get(id);//null arraylist에 객체 불러옴
 
-            if(postValueArrayList.get(0).keySet().equals(testDBHashMap.get(id).get(0).keySet())){//keySet = hashMap에 저장된 모든 key
-                testDBHashMap.replace(id, postValueArrayList);
-                responseEntity = new ResponseEntity<>(requestMap, HttpStatus.OK);
+                for (Map map : testDBHashMap.get(id)) { //testDB에서 순서대로 꺼내서 map에 넣음
 
-            }else{
-                responseEntity = new ResponseEntity<>("NOT_CONTAIN", HttpStatus.NOT_FOUND);
+                    if (map.keySet().equals(requestMap.keySet())) {
+                        postValueArrayList.set(postValueArrayList.indexOf(map), requestMap); // 특정 인덱스 값 변경
+                        testDBHashMap.replace(id, postValueArrayList);
+                        responseEntity = new ResponseEntity<>(requestMap, HttpStatus.OK);
+
+                    } else {
+                        responseEntity = new ResponseEntity<>("NOT_FOUND", HttpStatus.NOT_FOUND);
+                    }
+                }
+
+            } else {//id 존재하지 않음
+                responseEntity = new ResponseEntity<>("NOT_FOUND", HttpStatus.NOT_FOUND);
             }
 
-            }else{
-                responseEntity = new ResponseEntity<>("NOT_CONTAIN", HttpStatus.NOT_FOUND);
-            }
-
-        }else {
+        } else {// DB empty
             responseEntity = new ResponseEntity<>("NOT_CONTAIN", HttpStatus.BAD_REQUEST);
         }
-
         return responseEntity;
     }
 }
